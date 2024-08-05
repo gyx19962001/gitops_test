@@ -1,0 +1,194 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: mgmt07-w1
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/18
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 10.20.22.213
+    machineGroupRef:
+      kind: TinkerbellMachineConfig
+      name: mgmt07-w1-cp
+  datacenterRef:
+    kind: TinkerbellDatacenterConfig
+    name: mgmt07-w1
+  eksaVersion: v0.18.7
+  gitOpsRef:
+    kind: FluxConfig
+    name: my-github-flux-provider-w1
+  kubernetesVersion: "1.27"
+  machineHealthCheck:
+    nodeStartupTimeout: 20m0s
+    unhealthyMachineTimeout: 5m0s
+  managementCluster:
+    name: mgmt07
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: mgmt07-w1
+  namespace: default
+spec:
+  osImageURL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.27.13.gz
+  tinkerbellIP: 10.20.22.238
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/control-plane: "true"
+    anywhere.eks.amazonaws.com/managed-by: mgmt07
+  name: mgmt07-w1-cp
+  namespace: default
+spec:
+  hardwareSelector:
+    type: cp
+  osFamily: ubuntu
+  templateRef:
+    kind: TinkerbellTemplateConfig
+    name: mgmt07-w1
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDHI+SbUKhRdjJyZVDUXY0wYqqOa09WzY24gYw6H9ZjUc8j3GTvgKMrLlfnVZo4jU/edGsYrD3tqtwKlAp7Z6/z4rfb2Tyxl+Jaam6qXW03Qin9MhZPIhQ/ZqaRYtdn5L82YiUhnqbEkvnswEtMvruoL+/1J2jgweg0H1L5hBDlOZSUQoFQRtBIW2H9lm9y3jk6oDbrVRr4+kKUvf51mQlyO2N17fbBVUHpusNleUjOWvrEZq3ffUk3zKCRORDric6rtpa7HQJzoeIhsHON1cJJicxAAfsE6O3aGitzJdc4aQe1mkx3GUqJyrmpGmq4qD57uNbYBpLawlLlEqufPErz8MPvYlQSKZXuXKX+nHLeOK3KHRLciK0rRnpouCCeXCvXAZwYb0O6lnGnOfL6lT1HTLbPvQLhDQd0NGtJjoa5SAVLs1EBGTu/mFO+sRCavOcP01gs3v3cqq2qjN3tt9N1jXw9gZYLMBwVWxtR6G1ifsqKKoLIQdXfFbHEW7s/urU=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: my-github-flux-provider-w1
+  namespace: default
+spec:
+  branch: main
+  clusterConfigPath: github-mgmt07
+  github:
+    owner: gyx19962001
+    personal: true
+    repository: gitops_test
+  systemNamespace: flux-system
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: mgmt07-w1
+  namespace: default
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: mgmt07-w1
+    tasks:
+    - actions:
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.27.13.gz
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/image2disk:1.1
+        name: stream-image
+        timeout: 2400
+      - environment:
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/netplan/config.yaml
+          DIRMODE: "0755"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          STATIC_NETPLAN: "true"
+          UID: "0"
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/writefile:1.1
+        name: write-netplan
+        pid: host
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            datasource:
+              Ec2:
+                metadata_urls: [http://10.20.22.166:50061,http://10.20.22.238:50061]
+                strict_id: false
+            manage_etc_hosts: localhost
+            warnings:
+              dsid_missing_source: off
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/writefile:1.1
+        name: add-tink-cloud-init-config
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            network:
+              config: disabled
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/writefile:1.1
+        name: disable-cloud-init-network-capabilities
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            datasource: Ec2
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/ds-identify.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/writefile:1.1
+        name: add-tink-cloud-init-ds-config
+        timeout: 90
+      - environment:
+          BLOCK_DEVICE: /dev/sda2
+          CHROOT: "y"
+          CMD_LINE: apt -y update && apt -y install openssl
+          DEFAULT_INTERPRETER: /bin/sh -c
+          FS_TYPE: ext4
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/cexec:1.1
+        name: install-openssl
+        timeout: 90
+      - environment:
+          BLOCK_DEVICE: /dev/sda2
+          CHROOT: "y"
+          CMD_LINE: useradd --password $(openssl passwd -1 tinkerbell) --shell /bin/bash
+            --create-home --groups sudo tinkerbell
+          DEFAULT_INTERPRETER: /bin/sh -c
+          FS_TYPE: ext4
+        image: armadaeksatest.azurecr.io/tinkerbell/hub/cexec:1.1
+        name: create-user
+        timeout: 90
+      - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+        name: reboot
+        timeout: 90
+        volumes:
+        - /worker:/worker
+      name: mgmt07-w1
+      volumes:
+      - /dev:/dev
+      - /dev/console:/dev/console
+      - /lib/firmware:/lib/firmware:ro
+      worker: '{{.device_1}}'
+    version: "0.1"
+
+---
