@@ -27,7 +27,7 @@ spec:
   gitOpsRef:
     kind: FluxConfig
     name: my-github-flux-provider-w1
-  kubernetesVersion: "1.27"
+  kubernetesVersion: "1.28"
   machineHealthCheck:
     nodeStartupTimeout: 20m0s
     unhealthyMachineTimeout: 5m0s
@@ -41,7 +41,7 @@ metadata:
   name: mgmt07-w1
   namespace: default
 spec:
-  osImageURL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.27.13.gz
+  osImageURL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.28.9.gz
   tinkerbellIP: 10.20.22.238
 
 ---
@@ -96,7 +96,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.27.13.gz
+          IMG_URL: http://10.20.22.166:8082/artifactory/generic-local/ubuntu-2204-efi-eksa/ubuntu-2204-efi-eksa3-kube-v1.28.9.gz
         image: armadaeksatest.azurecr.io/tinkerbell/hub/image2disk:1.1
         name: stream-image
         timeout: 2400
