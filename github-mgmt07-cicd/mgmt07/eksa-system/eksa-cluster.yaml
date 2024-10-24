@@ -27,7 +27,7 @@ spec:
   gitOpsRef:
     kind: FluxConfig
     name: my-github-flux-provider
-  kubernetesVersion: "1.27"
+  kubernetesVersion: "1.28"
   machineHealthCheck:
     nodeStartupTimeout: 2562047h47m16.854775807s
     unhealthyMachineTimeout: 2562047h47m16.854775807s
@@ -42,7 +42,7 @@ metadata:
   namespace: default
 spec:
   hookImagesURLPath: https://armadaosimages.blob.core.windows.net/ubuntu-2204-efi
-  osImageURL: https://armadaosimages.blob.core.windows.net/ubuntu-2204-efi/ubuntu-2204-efi-eksa6-kube-v1.27.16.gz
+  osImageURL: https://armadaosimages.blob.core.windows.net/ubuntu-2204-efi/ubuntu-2204-efi-eksa6-kube-v1.28.15.gz
   tinkerbellIP: 10.20.22.214
 
 ---
@@ -96,7 +96,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: '{{ index .Hardware.Disks 0 }}'
-          IMG_URL: https://armadaosimages.blob.core.windows.net/ubuntu-2204-efi/ubuntu-2204-efi-eksa6-kube-v1.27.16.gz
+          IMG_URL: https://armadaosimages.blob.core.windows.net/ubuntu-2204-efi/ubuntu-2204-efi-eksa6-kube-v1.28.15.gz
         image: armadaeksatest.azurecr.io/tinkerbell/hub/image2disk:1.3
         name: stream-image
         timeout: 2400
